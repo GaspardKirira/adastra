@@ -207,25 +207,17 @@ namespace Adastra
     class TrieNode
     {
     public:
-        std::unordered_map<char, TrieNode *> children;
+        std::unordered_map<char, std::unique_ptr<TrieNode>> children;
         bool isEndOfWord;
         int frequency;
 
         TrieNode() : isEndOfWord(false), frequency(0) {}
-
-        ~TrieNode()
-        {
-            for (auto &child : children)
-            {
-                delete child.second;
-            }
-        }
     };
 
     class Trie
     {
     private:
-        TrieNode *root;
+        std::unique_ptr<TrieNode> root;
         std::map<std::string, std::vector<std::string>> semanticMap;
         std::unordered_map<std::string, std::string> cache;
 
@@ -238,7 +230,7 @@ namespace Adastra
 
             for (auto &child : node->children)
             {
-                collectSuggestions(child.second, prefix + child.first, suggestions);
+                collectSuggestions(child.second.get(), prefix + child.first, suggestions);
             }
         }
 
@@ -287,45 +279,32 @@ namespace Adastra
                 results.emplace_back(prefix, score);
                 mtx.unlock();
             }
+
             for (auto &child : node->children)
             {
-                collectWords(child.second, prefix + child.first, results, query);
+                collectWords(child.second.get(), prefix + child.first, results, query);
             }
-        }
-
-        std::string compressHuffman(const std::string &input)
-        {
-            std::string compressed;
-            for (char c : input)
-            {
-                compressed += std::to_string(static_cast<int>(c));
-            }
-            return compressed;
         }
 
     public:
         Trie()
         {
-            root = new TrieNode();
+            root = std::make_unique<TrieNode>();
             semanticMap["solaire"] = {"énergie", "lumière", "soleil"};
             semanticMap["solution"] = {"réponse", "résultat", "remède"};
         }
 
-        ~Trie() { delete root; }
-
         void insert(const std::string &word)
         {
-            TrieNode *node = root;
-            std::string compressed = compressHuffman(word);
-            cache[word] = compressed;
+            TrieNode *node = root.get();
 
-            for (char c : compressed)
+            for (char c : word)
             {
                 if (node->children.find(c) == node->children.end())
                 {
-                    node->children[c] = new TrieNode();
+                    node->children[c] = std::make_unique<TrieNode>();
                 }
-                node = node->children[c];
+                node = node->children[c].get();
             }
             node->isEndOfWord = true;
             node->frequency++;
@@ -336,7 +315,7 @@ namespace Adastra
             std::vector<std::pair<std::string, double>> results;
             std::vector<std::thread> threads;
 
-            threads.emplace_back(&Trie::collectWords, this, root, "", std::ref(results), query);
+            threads.emplace_back(&Trie::collectWords, this, root.get(), "", std::ref(results), query);
 
             for (auto &t : threads)
             {
@@ -356,7 +335,7 @@ namespace Adastra
 
         std::vector<std::string> suggestions(const std::string &prefix)
         {
-            TrieNode *node = root;
+            TrieNode *node = root.get();
             std::vector<std::string> results;
 
             for (char c : prefix)
@@ -365,22 +344,23 @@ namespace Adastra
                 {
                     return results;
                 }
-                node = node->children[c];
+                node = node->children[c].get();
             }
+
             collectSuggestions(node, prefix, results);
             return results;
         }
 
         bool search(const std::string &word)
         {
-            TrieNode *node = root;
-            for (char c : cache[word])
+            TrieNode *node = root.get();
+            for (char c : word)
             {
                 if (node->children.find(c) == node->children.end())
                 {
                     return false;
                 }
-                node = node->children[c];
+                node = node->children[c].get();
             }
             return node->isEndOfWord;
         }
