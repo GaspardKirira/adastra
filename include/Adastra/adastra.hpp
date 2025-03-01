@@ -10,6 +10,8 @@
 #include <cmath>
 #include <map>
 #include <queue>
+#include <thread>
+#include <mutex>
 
 namespace Adastra
 {
@@ -200,6 +202,8 @@ namespace Adastra
         }
     };
 
+    std::mutex mtx;
+
     class TrieNode
     {
     public:
@@ -275,10 +279,12 @@ namespace Adastra
                     auto synonyms = semanticMap[query];
                     if (std::find(synonyms.begin(), synonyms.end(), prefix) != synonyms.end())
                     {
-                        score += 0.5; // Boost score if synonym is found
+                        score += 0.5;
                     }
                 }
+                mtx.lock();
                 results.emplace_back(prefix, score);
+                mtx.unlock();
             }
             for (auto &child : node->children)
             {
@@ -314,7 +320,15 @@ namespace Adastra
         std::vector<std::string> searchWithRanking(const std::string &query)
         {
             std::vector<std::pair<std::string, double>> results;
-            collectWords(root, "", results, query);
+            std::vector<std::thread> threads;
+
+            threads.emplace_back(&Trie::collectWords, this, root, "", std::ref(results), query);
+
+            for (auto &t : threads)
+            {
+                t.join();
+            }
+
             std::sort(results.begin(), results.end(), [](const auto &a, const auto &b)
                       { return a.second > b.second; });
 
