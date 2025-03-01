@@ -7,6 +7,9 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <memory>
+#include <cmath>
+#include <map>
+#include <queue>
 
 namespace Adastra
 {
@@ -219,6 +222,7 @@ namespace Adastra
     {
     private:
         TrieNode *root;
+        std::map<std::string, std::vector<std::string>> semanticMap;
 
         void collectSuggestions(TrieNode *node, const std::string &prefix, std::vector<std::string> &suggestions)
         {
@@ -266,6 +270,14 @@ namespace Adastra
             {
                 int distance = levenshteinDistance(query, prefix);
                 double score = (1.0 / (1 + distance)) + (prefix.size() * 0.1) + (node->frequency * 0.2);
+                if (semanticMap.find(query) != semanticMap.end())
+                {
+                    auto synonyms = semanticMap[query];
+                    if (std::find(synonyms.begin(), synonyms.end(), prefix) != synonyms.end())
+                    {
+                        score += 0.5; // Boost score if synonym is found
+                    }
+                }
                 results.emplace_back(prefix, score);
             }
             for (auto &child : node->children)
@@ -275,7 +287,12 @@ namespace Adastra
         }
 
     public:
-        Trie() { root = new TrieNode(); }
+        Trie()
+        {
+            root = new TrieNode();
+            semanticMap["solaire"] = {"énergie", "lumière", "soleil"};
+            semanticMap["solution"] = {"réponse", "résultat", "remède"};
+        }
 
         ~Trie() { delete root; }
 
