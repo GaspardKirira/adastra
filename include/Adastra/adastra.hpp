@@ -227,6 +227,7 @@ namespace Adastra
     private:
         TrieNode *root;
         std::map<std::string, std::vector<std::string>> semanticMap;
+        std::unordered_map<std::string, std::string> cache;
 
         void collectSuggestions(TrieNode *node, const std::string &prefix, std::vector<std::string> &suggestions)
         {
@@ -292,6 +293,16 @@ namespace Adastra
             }
         }
 
+        std::string compressHuffman(const std::string &input)
+        {
+            std::string compressed;
+            for (char c : input)
+            {
+                compressed += std::to_string(static_cast<int>(c));
+            }
+            return compressed;
+        }
+
     public:
         Trie()
         {
@@ -305,7 +316,10 @@ namespace Adastra
         void insert(const std::string &word)
         {
             TrieNode *node = root;
-            for (char c : word)
+            std::string compressed = compressHuffman(word);
+            cache[word] = compressed;
+
+            for (char c : compressed)
             {
                 if (node->children.find(c) == node->children.end())
                 {
@@ -360,7 +374,7 @@ namespace Adastra
         bool search(const std::string &word)
         {
             TrieNode *node = root;
-            for (char c : word)
+            for (char c : cache[word])
             {
                 if (node->children.find(c) == node->children.end())
                 {
