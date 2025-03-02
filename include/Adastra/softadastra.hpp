@@ -9,7 +9,6 @@ namespace Adastra
         {
         public:
             Softadastra();
-            void say_hello() const;
         };
     } // namespace GK
 

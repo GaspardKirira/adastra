@@ -12,6 +12,7 @@
 #include <queue>
 #include <thread>
 #include <mutex>
+#include <iostream>
 
 namespace Adastra
 {
@@ -50,7 +51,7 @@ namespace Adastra
             return true;
         }
 
-        void sortWithValidation(const std::vector<int> &data)
+        void sortWithValidation(std::vector<int> &data)
         {
             if (!areAllElementsValid(data))
             {
@@ -60,7 +61,7 @@ namespace Adastra
         }
 
         template <typename T>
-        static std::optional<T> linearSearch(auto &first, auto &last, const T &target)
+        static std::optional<T> linearSearch(typename std::vector<T>::iterator first, typename std::vector<T> last, const T &target)
         {
             auto it = std::find(first, last, target);
             if (it != last)
@@ -69,8 +70,8 @@ namespace Adastra
                 return std::nullopt;
         }
 
-        template <typename T>
-        static bool binarySearch(auto &first, auto &last, const T &target)
+        template <typename ForwardIt, typename T>
+        static bool binarySearch(ForwardIt first, ForwardIt last, const T &target)
         {
             sortColl(first, last,
                      [](int a, int b)
@@ -82,7 +83,7 @@ namespace Adastra
         }
 
         template <typename ForwardIt, typename T>
-        bool safeBinarySearch(ForwardIt first, ForwardIt last, const T &target)
+        static bool safeBinarySearch(ForwardIt first, ForwardIt last, const T &target)
         {
             if (first == last)
             {
@@ -120,7 +121,7 @@ namespace Adastra
             if (it != last)
                 return *it;
             else
-                return std::nullopt
+                return std::nullopt;
         }
 
         template <typename ForwardIt, typename T>
@@ -290,8 +291,6 @@ namespace Adastra
         Trie()
         {
             root = std::make_unique<TrieNode>();
-            semanticMap["solaire"] = {"énergie", "lumière", "soleil"};
-            semanticMap["solution"] = {"réponse", "résultat", "remède"};
         }
 
         void insert(const std::string &word)

@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 project(Adastra)
 
 # Définir la version de C++
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # Ajouter le répertoire "include" pour les fichiers d'en-tête
 include_directories(include)
