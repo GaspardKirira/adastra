@@ -23,8 +23,8 @@ namespace Adastra
         Adastra() {}
         ~Adastra() {}
 
-        template <typename ForwardIt>
-        static void sortColl(ForwardIt first, ForwardIt last, auto cmp)
+        template <typename ForwardIt, typename Compare>
+        static void sortColl(ForwardIt first, ForwardIt last, Compare cmp)
         {
             std::sort(first, last, cmp);
         }

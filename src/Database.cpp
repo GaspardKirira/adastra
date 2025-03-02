@@ -1,4 +1,6 @@
 #include "Adastra/Database.hpp"
+#include <mysql_driver.h>
+#include <cppconn/prepared_statement.h>
 
 namespace Adastra
 {
@@ -12,7 +14,8 @@ namespace Adastra
     std::unique_ptr<Database> Database::instance = nullptr;
     std::mutex Database::mtx;
 
-    Database::Database()
+    Database::Database(const std::string &host, const std::string &user, const std::string &password, const std::string &database)
+        : host(host), user(user), password(password), database(database)
     {
         connect();
     }
@@ -24,8 +27,8 @@ namespace Adastra
             if (!connection)
             {
                 sql::mysql::MySQL_Driver *driver = sql::mysql::get_mysql_driver_instance();
-                connection = std::shared_ptr<sql::Connection>(driver->connect("tcp://127.0.0.1:3306", "root", ""));
-                connection->setSchema("softadastra");
+                connection = std::shared_ptr<sql::Connection>(driver->connect(host, user, password));
+                connection->setSchema(database);
                 std::cout << "Connexion à la base de données réussie !" << std::endl;
             }
         }
@@ -62,30 +65,63 @@ namespace Adastra
         }
     }
 
-    // Retourne la connexion à la base de données
     std::shared_ptr<sql::Connection> Database::getConnection()
     {
         return connection;
     }
 
-    // Destructeur
     Database::~Database()
     {
         std::cout << "Connexion à la base de données fermée." << std::endl;
     }
 
-    // Fonction pour obtenir l'instance unique de Database
-    std::unique_ptr<Database> &Database::getInstance()
+    std::unique_ptr<Database> &Database::getInstance(const std::string &host, const std::string &user, const std::string &password, const std::string &database)
     {
         if (!instance)
         {
             std::lock_guard<std::mutex> lock(mtx);
             if (!instance)
             {
-                instance = std::make_unique<Database>();
+                instance = std::make_unique<Database>(host, user, password, database);
             }
         }
         return instance;
+    }
+
+    std::string Database::join(const std::vector<std::string> &vec, const std::string &delimiter)
+    {
+        std::string result;
+        for (size_t i = 0; i < vec.size(); ++i)
+        {
+            result += vec[i];
+            if (i != vec.size() - 1)
+                result += delimiter;
+        }
+        return result;
+    }
+
+    std::string Database::placeholders(size_t count)
+    {
+        std::string ph;
+        for (size_t i = 0; i < count; ++i)
+        {
+            if (i > 0)
+                ph += ", "; // Ajouter une virgule entre les `?`
+            ph += "?";
+        }
+        return ph;
+    }
+
+    std::string Database::createSetClause(const std::vector<std::string> &columns)
+    {
+        std::string setClause;
+        for (const auto &col : columns)
+        {
+            if (!setClause.empty())
+                setClause += ", ";
+            setClause += col + " = ?";
+        }
+        return setClause;
     }
 
 } // namespace Adastra
