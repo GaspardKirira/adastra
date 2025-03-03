@@ -106,7 +106,7 @@ namespace Adastra
         for (size_t i = 0; i < count; ++i)
         {
             if (i > 0)
-                ph += ", "; // Ajouter une virgule entre les `?`
+                ph += ", ";
             ph += "?";
         }
         return ph;
