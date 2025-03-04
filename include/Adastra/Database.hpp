@@ -19,6 +19,7 @@ namespace Adastra
     public:
         explicit DatabaseException(const std::string &message);
         const char *what() const noexcept override;
+        ~DatabaseException() noexcept = default;
 
     private:
         std::string message;
