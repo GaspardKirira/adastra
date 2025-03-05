@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <string_view>
+#include <memory>
 
 enum class ErrorCode
 {
@@ -18,11 +19,11 @@ class BaseException : public std::exception
 {
 public:
     explicit BaseException(std::string_view message, ErrorCode code = ErrorCode::UndefinedError) noexcept
-        : message_(std::string(message)), code_(code) {}
+        : message_(std::make_unique<std::string>(message)), code_(code) {}
 
     virtual const char *what() const noexcept override
     {
-        return message_.c_str();
+        return message_->c_str();
     }
 
     ErrorCode code() const noexcept
@@ -31,7 +32,7 @@ public:
     }
 
 protected:
-    std::string message_;
+    std::unique_ptr<std::string> message_;
     ErrorCode code_;
 };
 
