@@ -75,6 +75,45 @@ namespace Adastra
         void setParameter(std::unique_ptr<sql::PreparedStatement> &pstmt, int index, double value);
         void setParameter(std::unique_ptr<sql::PreparedStatement> &pstmt, int index, const std::string &value);
         void setParameter(std::unique_ptr<sql::PreparedStatement> &pstmt, int index, const char *value);
+
+        // Méthodes pour la gestion des transactions
+        void beginTransaction()
+        {
+            if (connection)
+            {
+                connection->setAutoCommit(false);
+            }
+            else
+            {
+                throw DatabaseException("La connexion à la base de données n'est pas établie.");
+            }
+        }
+
+        void commit()
+        {
+            if (connection)
+            {
+                connection->commit();
+                connection->setAutoCommit(true); // Revenir au mode auto-commit
+            }
+            else
+            {
+                throw DatabaseException("La connexion à la base de données n'est pas établie.");
+            }
+        }
+
+        void rollback()
+        {
+            if (connection)
+            {
+                connection->rollback();
+                connection->setAutoCommit(true); // Revenir au mode auto-commit
+            }
+            else
+            {
+                throw DatabaseException("La connexion à la base de données n'est pas établie.");
+            }
+        }
     };
 
     template <typename... Args>
@@ -117,7 +156,6 @@ namespace Adastra
                 setParameter(pstmt, index++, value);
             }
 
-            // Si Args n'est pas vide, appelez setParameters pour les arguments supplémentaires
             if constexpr (sizeof...(args) > 0)
             {
                 setParameters(pstmt, index, std::forward<Args>(args)...);
@@ -137,9 +175,9 @@ namespace Adastra
         try
         {
             std::string query = "DELETE FROM " + table + " WHERE " + condition;
+            std::cout << "Requête SQL de suppression : " << query << std::endl; // Ajoutez une impression pour le débogage
             std::unique_ptr<sql::PreparedStatement> pstmt(connection->prepareStatement(query));
 
-            // Si des arguments sont passés, appelez setParameters
             if constexpr (sizeof...(args) > 0)
             {
                 setParameters(pstmt, 1, std::forward<Args>(args)...);
@@ -153,7 +191,6 @@ namespace Adastra
         }
     }
 
-    // Implémentation de setParameters pour un seul argument
     // Implémentation de setParameters pour un seul argument
     template <typename T>
     void Database::setParameters(std::unique_ptr<sql::PreparedStatement> &pstmt, int index, T &&value)

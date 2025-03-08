@@ -83,7 +83,6 @@ constexpr int Levenshtein(const std::string &s1, const std::string &s2)
     int m = s1.size();
     int n = s2.size();
 
-    // Remplacer std::vector par std::array pour un tableau de taille fixe
     std::array<std::array<int, 100>, 100> dp{};
 
     for (int i = 0; i <= m; ++i)
